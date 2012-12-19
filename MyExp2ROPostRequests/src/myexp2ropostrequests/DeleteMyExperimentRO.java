@@ -37,9 +37,10 @@ public class DeleteMyExperimentRO {
       }
         
     }
+    
 //    public static void main(String[] args){
-//        DeleteMyExperimentRO.deleteRO("http://sandbox.wf4ever-project.org/rodl/ROs/myExpRO-1977/");
-////        DeleteMyExperimentRO.deleteRO("http://sandbox.wf4ever-project.org/rodl/ROs/Sample/");
+////        DeleteMyExperimentRO.deleteRO("http://sandbox.wf4ever-project.org/rodl/ROs/myExpRO-1977/");
+//        DeleteMyExperimentRO.deleteRO("http://sandbox.wf4ever-project.org/rodl/ROs/Sample2/");
 ////        DeleteMyExperimentRO.deleteRO("http://sandbox.wf4ever-project.org/rodl/ROs/Sample3/");
 //    }
     

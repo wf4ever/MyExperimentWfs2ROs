@@ -20,15 +20,58 @@ import epnoi.model.Workflow;
 public class WorkflowsImporter {
 
 	private List<Workflow> workflows;
+        private int numberOfWorkflows;
 
 	public WorkflowsImporter() {
 
 		this.workflows = new ArrayList<Workflow>();
+                numberOfWorkflows = 0;
 	}
+        
+        public void deleteWorkflows(){
+            String currentWorkflow ="";
+            for (Workflow workflow : workflows) {
+                    try{
+                        currentWorkflow = workflow.getURI();
+                        if ("application/vnd.taverna.t2flow+xml".equals(workflow
+                                        .getContentType())) {
+                                System.out.println("Deleting: http://sandbox.wf4ever-project.org/rodl/ROs/myExpRO_"+workflow.getID()+"/");
+                                DeleteMyExperimentRO.deleteRO("http://sandbox.wf4ever-project.org/rodl/ROs/myExpRO_"+workflow.getID()+"/");
+                                Thread.sleep(1000);//to leave the server time to clean up resources between creation of ROs.
+                        }
+                    }catch(Exception e){
+                        System.out.println("Exception while deleting the workflow "+currentWorkflow+" Exception: "+e.getMessage());
+                    }
+		}
+        }
+        
+        public void migrateAndAnnotateWorkflows(){
+            String currentWorkflow ="";
+            for (Workflow workflow : workflows) {
+                try{
+                    currentWorkflow = workflow.getURI();
+                    if ("application/vnd.taverna.t2flow+xml".equals(workflow.getContentType())) {
+                        numberOfWorkflows++;
+                        System.out.println("Creating RO from "+workflow.getURI()+"...");
+                        PostMyExperimentToRO.postROToRODLFromMyExperimentID(workflow.getContentURI(), "http://sandbox.wf4ever-project.org/rodl/ROs/myExpRO_"+workflow.getID()+"/");
+                        System.out.println("Annotating RO ...");
+                        AnnotateRO.annotateRO(workflow.getContentURI(), "http://sandbox.wf4ever-project.org/rodl/ROs/myExpRO_"+workflow.getID()+"/");
+                    }
+                }catch(Exception e){
+                    System.out.println("Exception while creating/annotating the workflow "+currentWorkflow+" Exception: "+e.getMessage());
+                }
+            }
+            System.out.println("The total number of t2flow workflows is " + numberOfWorkflows);
+            
+        }
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws InterruptedException {
 		System.out.println("Starting the workflows import process");
+                //tests//
 //		Workflow w = WorkflowWrapper.extractWorkflow("http://www.myexperiment.org/workflow.xml?id=1977");
+//                PostMyExperimentToRO.postROToRODLFromMyExperimentID(w.getContentURI(), "http://sandbox.wf4ever-project.org/rodl/ROs/Sample2/");
+//                AnnotateRO.annotateRO(w.getContentURI(), "http://sandbox.wf4ever-project.org/rodl/ROs/Sample2/");
+                    
 //                System.out.println("Content URI: "+w.getContentURI());
 //                System.out.println("Type: "+w.getContentType());
 //                System.out.println("ID :"+w.getID());
@@ -38,58 +81,16 @@ public class WorkflowsImporter {
               //Isolated test
 //              PostMyExperimentToRO.postROToRODLFromMyExperimentID(w.getContentURI(), "http://sandbox.wf4ever-project.org/rodl/ROs/myExpRO-"+w.getID()+"/");
 //              AnnotateRO.annotateRO(w.getContentURI(), "http://sandbox.wf4ever-project.org/rodl/ROs/myExpRO-"+w.getID()+"/");
-                String currentWorkflow ="";
+                //end of tests//
             try{                    
               WorkflowsImporter workflowsImporter = new WorkflowsImporter();                
-		workflowsImporter.extractWorkflows();
-		int workflowsCount = 0;
-                
+		workflowsImporter.extractWorkflows();                
                 //workflow extraction
-                List<Workflow> list = workflowsImporter.getWorkflows();
-                
+                List<Workflow> list = workflowsImporter.getWorkflows();                
                 //Delete previous ROs (in case there are malformed ones)
-                for (Workflow workflow : list) {
-                    try{
-                        currentWorkflow = workflow.getURI();
-                        if ("application/vnd.taverna.t2flow+xml".equals(workflow
-                                        .getContentType())) {
-                                System.out.println("Deleting: http://sandbox.wf4ever-project.org/rodl/ROs/myExpRO_"+workflow.getID()+"/");
-                                DeleteMyExperimentRO.deleteRO("http://sandbox.wf4ever-project.org/rodl/ROs/myExpRO_"+workflow.getID()+"/");
-                                Thread.sleep(2000);//to leave the server time to clean up resources between creation of ROs.
-                        }
-                    }catch(Exception e){
-                        System.out.println("Exception while creating the workflow "+currentWorkflow+" Exception: "+e.getMessage());
-                    }
-		}
-                
-                //RO creation
-		for (Workflow workflow : list) {
-                    try{
-                        currentWorkflow = workflow.getURI();
-                        if ("application/vnd.taverna.t2flow+xml".equals(workflow
-                                        .getContentType())) {
-                                workflowsCount++;
-                                PostMyExperimentToRO.postROToRODLFromMyExperimentID(workflow.getContentURI(), "http://sandbox.wf4ever-project.org/rodl/ROs/myExpRO_"+workflow.getID()+"/");
-                                Thread.sleep(3000);//to leave the server time to clean up resources between creation of ROs.
-                        }
-                    }catch(Exception e){
-                        System.out.println("Exception while creating the workflow "+currentWorkflow+" Exception: "+e.getMessage());
-                    }
-		}
-                //RO annotation. We have to do it separately to wait until the ROs have been created.
-                for(Workflow workflow :list){
-                    try{
-                        currentWorkflow = workflow.getURI();
-                        if ("application/vnd.taverna.t2flow+xml".equals(workflow.getContentType())) {                                
-                                AnnotateRO.annotateRO(workflow.getContentURI(), "http://sandbox.wf4ever-project.org/rodl/ROs/myExpRO_"+workflow.getID()+"/");
-                                Thread.sleep(1000);//to leave the server time to clean up resources between annotations.
-                        }
-                        
-                    }catch(Exception e){
-                        System.out.println("Exception while annotating the workflow "+currentWorkflow+" Exception: "+e.getMessage());
-                    }
-                }
-		System.out.println("The total number of t2flow workflows is " + workflowsCount);
+                workflowsImporter.deleteWorkflows();                
+                //RO creation and annotation
+                workflowsImporter.migrateAndAnnotateWorkflows();		
 		System.out.println("Finishing the workflow import process");
                 
             }catch(Exception e){

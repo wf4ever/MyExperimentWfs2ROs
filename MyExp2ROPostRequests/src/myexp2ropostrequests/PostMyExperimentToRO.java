@@ -1,5 +1,6 @@
 package myexp2ropostrequests;
 
+import com.sun.istack.internal.FinalArrayList;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.PostMethod;
@@ -15,9 +16,10 @@ import org.apache.commons.io.IOUtils;
 
 public class PostMyExperimentToRO {
     
-  public static void postROToRODLFromMyExperimentID(String t2flowURI, String roID) throws InterruptedException{
+  public static String postROToRODLFromMyExperimentID(String t2flowURI, String roID) throws InterruptedException{
       HttpClient client = new HttpClient();    
       BufferedReader br = null;
+      String finalStatus ="";
       
       PostMethod method = new PostMethod(Constants.apiURL);    
       method.addParameter("resource", t2flowURI);//"https://raw.github.com/wf4ever/provenance-corpus/master/Taverna_repository/workflow_2228_version_1/amiga_conesearch_from_a_file_of_targets_positions_268018.t2flow");
@@ -39,25 +41,29 @@ public class PostMyExperimentToRO {
                   System.err.println(readLine);
               }
               System.out.println(method.getStatusText());
-              String status = method.getResponseHeader("Location").getValue();
+              String jobURI = method.getResponseHeader("Location").getValue();
               
-              System.out.println("Job uri: "+status);
+              System.out.println("Job uri: "+jobURI);
               
               //wait for the response until the job is done              
-              System.out.print("Waiting for the job to finish (ping every 2 seconds...\n");
+              System.out.print("Waiting for the job to finish (ping every 2 seconds) ...\n");
               int retries = 0;
-              while (checkJob(status).equals("RUNNING")){
+              finalStatus =checkJob(jobURI);
+              while (finalStatus.equals("RUNNING")){
                   retries++;
                   System.out.print(retries+"... ");
                   Thread.sleep(2000);
+                  finalStatus = checkJob(jobURI);
               }
-              System.out.println("\nJob finished");
+              System.out.println("\nJob finished. STATUS: "+finalStatus);              
           }
       } catch (Exception e) {
           System.err.println(e);
+          finalStatus = "FAIL";
       } finally {
-          method.releaseConnection();
+          method.releaseConnection();          
           if(br != null) try { br.close(); } catch (Exception fe) {}
+          return finalStatus;
       }   
       
   }

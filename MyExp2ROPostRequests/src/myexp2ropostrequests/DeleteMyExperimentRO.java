@@ -5,11 +5,9 @@
 package myexp2ropostrequests;
 
 import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.DeleteMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
 
 /**
  *

@@ -47,15 +47,20 @@ public class WorkflowsImporter {
         
         public void migrateAndAnnotateWorkflows(){
             String currentWorkflow ="";
+            String lastStatus = "";
             for (Workflow workflow : workflows) {
                 try{
                     currentWorkflow = workflow.getURI();
                     if ("application/vnd.taverna.t2flow+xml".equals(workflow.getContentType())) {
                         numberOfWorkflows++;
                         System.out.println("Creating RO from "+workflow.getURI()+"...");
-                        PostMyExperimentToRO.postROToRODLFromMyExperimentID(workflow.getContentURI(), "http://sandbox.wf4ever-project.org/rodl/ROs/myExpRO_"+workflow.getID()+"/");
-                        System.out.println("Annotating RO ...");
-                        AnnotateRO.annotateRO(workflow.getContentURI(), "http://sandbox.wf4ever-project.org/rodl/ROs/myExpRO_"+workflow.getID()+"/");
+                        lastStatus = PostMyExperimentToRO.postROToRODLFromMyExperimentID(workflow.getContentURI(), "http://sandbox.wf4ever-project.org/rodl/ROs/myExpRO_"+workflow.getID()+"/");
+                        if (lastStatus.equals("DONE")){
+                            System.out.println("Annotating RO ...");
+                            AnnotateRO.annotateRO(workflow.getContentURI(), "http://sandbox.wf4ever-project.org/rodl/ROs/myExpRO_"+workflow.getID()+"/");
+                        }else{
+                            System.out.println("Skipping annotation. Final Status different from \"DONE\"");
+                        }
                     }
                 }catch(Exception e){
                     System.out.println("Exception while creating/annotating the workflow "+currentWorkflow+" Exception: "+e.getMessage());
@@ -78,15 +83,18 @@ public class WorkflowsImporter {
 //                System.out.println("URI :"+w.getURI());
 //                System.out.println("Resource: "+w.getResource());
 //                System.out.println("Title "+w.getTitle());
-              //Isolated test
-//              PostMyExperimentToRO.postROToRODLFromMyExperimentID(w.getContentURI(), "http://sandbox.wf4ever-project.org/rodl/ROs/myExpRO-"+w.getID()+"/");
-//              AnnotateRO.annotateRO(w.getContentURI(), "http://sandbox.wf4ever-project.org/rodl/ROs/myExpRO-"+w.getID()+"/");
-                //end of tests//
+//              //Isolated test
+//              String lastStatus = PostMyExperimentToRO.postROToRODLFromMyExperimentID(w.getContentURI(), "http://sandbox.wf4ever-project.org/rodl/ROs/myExpRO-"+w.getID()+"/");              
+//              if (lastStatus.equals("DONE")){
+//                    System.out.println("Annotating RO ...");
+//                    AnnotateRO.annotateRO(w.getContentURI(), "http://sandbox.wf4ever-project.org/rodl/ROs/myExpRO-"+w.getID()+"/");
+//              }else{
+//                    System.out.println("Skipping annotation. Final Status different from \"DONE\"");
+//              }
+//              //  end of tests//
             try{                    
               WorkflowsImporter workflowsImporter = new WorkflowsImporter();                
-		workflowsImporter.extractWorkflows();                
-                //workflow extraction
-                List<Workflow> list = workflowsImporter.getWorkflows();                
+		workflowsImporter.extractWorkflows();
                 //Delete previous ROs (in case there are malformed ones)
                 workflowsImporter.deleteWorkflows();                
                 //RO creation and annotation
